@@ -122,9 +122,68 @@ body {
     font-weight: bold;
     color: #1f77b4;
 }
+/* 맨 위로 버튼 스타일 - 더 강력한 스타일링 */
+.scroll-to-top {
+    position: fixed !important;
+    bottom: 30px !important;
+    right: 30px !important;
+    width: 60px !important;
+    height: 60px !important;
+    background-color: #ff4b4b !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    z-index: 9999 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+}
+.scroll-to-top:hover {
+    background-color: #e73c3c !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4) !important;
+}
+.scroll-to-top:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+/* Streamlit 특정 컨테이너들이 버튼을 가리지 않도록 */
+.main .block-container {
+    padding-bottom: 100px !important;
+}
+            
 </style>
+""", unsafe_allow_html=True)
 
+# 맨 위로 버튼을 HTML로 직접 추가
+st.markdown("""
+<a href="#top" class="scroll-to-top" title="맨 위로">↑</a>
+<div id="top"></div>
+""", unsafe_allow_html=True)
+
+# JavaScript로 스크롤 동작 추가
+st.markdown("""
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 맨 위로 버튼 클릭 이벤트
+    const scrollButton = document.querySelector('.scroll-to-top');
+    if (scrollButton) {
+        scrollButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // 헤더 높이에 따라 메인 콘텐츠 패딩 조정
     function adjustMainContentPadding() {
         const header = document.querySelector('.fixed-header');
         const mainContent = document.querySelector('.main-content');
@@ -133,12 +192,17 @@ body {
             mainContent.style.paddingTop = headerHeight + 20 + 'px';
         }
     }
-    const observer = new MutationObserver((mutations) => {
-        window.requestAnimationFrame(adjustMainContentPadding);
+    
+    // 초기 실행 및 리사이즈 이벤트
+    adjustMainContentPadding();
+    window.addEventListener('resize', adjustMainContentPadding);
+    
+    // MutationObserver로 DOM 변경 감지
+    const observer = new MutationObserver(function(mutations) {
+        setTimeout(adjustMainContentPadding, 100);
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('load', adjustMainContentPadding);
-    window.addEventListener('resize', adjustMainContentPadding);
+});
 </script>
 """, unsafe_allow_html=True)
 
