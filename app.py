@@ -157,7 +157,6 @@ body {
 .main .block-container {
     padding-bottom: 100px !important;
 }
-            
 </style>
 """, unsafe_allow_html=True)
 
