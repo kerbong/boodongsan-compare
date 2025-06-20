@@ -12,3 +12,12 @@ __pycache__/
 # IDE 및 에디터 설정 파일 무시
 .vscode/
 .idea/
+
+# 폰트 파일
+fonts/
+*.ttf
+*.otf
+
+
+# Streamlit
+.streamlit/secrets.toml

@@ -7,16 +7,69 @@ import platform
 # 페이지를 넓게 사용하도록 설정
 st.set_page_config(layout="wide")
 
-# OS에 따라 적절한 한글 폰트 설정
-if platform.system() == 'Windows':
-    matplotlib.rc('font', family='Malgun Gothic')
-elif platform.system() == 'Darwin': # Mac OS
-    matplotlib.rc('font', family='AppleGothic')
-else: # Colab, Linux 등
-    # 나눔고딕 폰트 경로 설정 (코랩 등 환경에 맞게 설치 필요)
-    matplotlib.rc('font', family='NanumGothic')
-# 마이너스 부호 깨짐 방지
-matplotlib.rcParams['axes.unicode_minus'] = False
+# 한글 폰트 설정 - 클라우드 환경 대응
+@st.cache_resource
+def setup_korean_font():
+    """한글 폰트를 다운로드하고 설정하는 함수"""
+    import os
+    import urllib.request
+    import matplotlib.font_manager as fm
+    
+    try:
+        # 1. 시스템별 기본 폰트 시도
+        if platform.system() == 'Windows':
+            matplotlib.rc('font', family='Malgun Gothic')
+            matplotlib.rcParams['axes.unicode_minus'] = False
+            return "Windows font applied"
+        elif platform.system() == 'Darwin':  # Mac OS
+            matplotlib.rc('font', family='AppleGothic')
+            matplotlib.rcParams['axes.unicode_minus'] = False
+            return "Mac font applied"
+        else:  # Linux (클라우드 환경)
+            # fonts 디렉토리 생성
+            font_dir = './fonts'
+            if not os.path.exists(font_dir):
+                os.makedirs(font_dir)
+            
+            font_file = os.path.join(font_dir, 'NanumGothic.ttf')
+            
+            # 폰트 파일이 없으면 다운로드
+            if not os.path.exists(font_file):
+                try:
+                    with st.spinner("한글 폰트를 다운로드하고 있습니다..."):
+                        font_url = 'https://github.com/naver/nanumfont/raw/master/fonts/NanumGothic.ttf'
+                        urllib.request.urlretrieve(font_url, font_file)
+                except Exception as e:
+                    st.warning(f"폰트 다운로드 실패: {e}. 기본 폰트를 사용합니다.")
+                    matplotlib.rc('font', family='DejaVu Sans')
+                    matplotlib.rcParams['axes.unicode_minus'] = False
+                    return "Default font applied"
+            
+            # 폰트 등록 및 설정
+            if os.path.exists(font_file):
+                try:
+                    fm.fontManager.addfont(font_file)
+                    plt.rcParams['font.family'] = 'NanumGothic'
+                    plt.rcParams['axes.unicode_minus'] = False
+                    return "Korean font downloaded and applied"
+                except Exception as e:
+                    st.warning(f"폰트 설정 실패: {e}. 기본 폰트를 사용합니다.")
+            
+            # 폰트 설정 실패 시 기본 폰트 사용
+            matplotlib.rc('font', family='DejaVu Sans')
+            matplotlib.rcParams['axes.unicode_minus'] = False
+            return "Default font applied"
+        
+    except Exception as e:
+        st.error(f"폰트 설정 중 오류 발생: {e}")
+        matplotlib.rcParams['font.family'] = 'DejaVu Sans'
+        matplotlib.rcParams['axes.unicode_minus'] = False
+        return "Error - default font applied"
+
+# 폰트 설정 실행
+font_status = setup_korean_font()
+if "Korean font" not in font_status:
+    st.info("💡 한글 폰트가 적용되지 않아 일부 텍스트가 □로 표시될 수 있습니다.")
 
 
 # --- CSS 및 JavaScript 스타일링 ---
