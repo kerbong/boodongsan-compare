@@ -4,112 +4,146 @@ import matplotlib.pyplot as plt
 import matplotlib
 import platform
 
-# 페이지 설정
+# 페이지를 넓게 사용하도록 설정
 st.set_page_config(layout="wide")
 
-# 한글 폰트 설정
+# OS에 따라 적절한 한글 폰트 설정
 if platform.system() == 'Windows':
     matplotlib.rc('font', family='Malgun Gothic')
-elif platform.system() == 'Darwin':
+elif platform.system() == 'Darwin': # Mac OS
     matplotlib.rc('font', family='AppleGothic')
-else:
+else: # Colab, Linux 등
+    # 나눔고딕 폰트 경로 설정 (코랩 등 환경에 맞게 설치 필요)
     matplotlib.rc('font', family='NanumGothic')
+# 마이너스 부호 깨짐 방지
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-# 스타일 커스터마이징
+
+# --- CSS 및 JavaScript 스타일링 ---
 st.markdown("""
-    <style>
-    div[data-baseweb="select"] > div {
-        cursor: pointer;
+<style>
+/* 전체 페이지의 여백 제거 */
+body {
+    margin: 0;
+    padding: 0;
+}
+/* 고정 헤더 컨테이너 */
+.fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+/* 선택 정보 표시 바 */
+.selected-info-bar {
+    padding: 10px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+/* 단지 선택 버튼들을 감싸는 컨테이너 */
+.button-container {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+    padding: 10px 20px;
+    max-height: 300px; 
+    overflow-y: auto;
+    align-items: flex-start !important;
+}
+/* Streamlit이 각 버튼을 감싸는 컨테이너를 강제로 flex 아이템처럼 동작하게 함 */
+.button-container > div {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+}
+/* Streamlit 컬럼 컨테이너 무력화 */
+.button-container .element-container,
+.button-container .stButton,
+.button-container > div[data-testid="stElementContainer"],
+.button-container > div[data-testid="column"] {
+    width: auto !important;
+    flex: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+/* Streamlit 버튼 기본 스타일 */
+.stButton > button {
+    min-width: 120px !important;
+    max-width: 180px !important;
+    height: 35px !important;
+    font-size: 11px !important;
+    padding: 4px 12px !important;
+    border-radius: 4px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    margin: 0 !important;
+    border: 1px solid rgba(49, 51, 63, 0.2) !important;
+    display: inline-block !important;
+}
+/* 선택되지 않은 버튼 (secondary) */
+.stButton > button[kind="secondary"] {
+    background-color: #f0f2f6 !important;
+    color: rgba(49, 51, 63, 0.8) !important;
+}
+.stButton > button[kind="secondary"]:hover {
+    border-color: #ff4b4b !important;
+    color: #ff4b4b !important;
+}
+/* 선택된 버튼 (primary) */
+.stButton > button[kind="primary"] {
+    background-color: #ff4b4b !important;
+    color: white !important;
+    border-color: #ff4b4b !important;
+}
+/* 메인 콘텐츠 영역: JS가 동적으로 상단 여백을 설정 */
+.main-content {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+/* 그래프를 감싸는 컨테이너 스타일 */
+.graph-container {
+    width: 100%;
+    margin-top: 20px;
+}
+.graph-box {
+    margin-bottom: 30px;
+}
+/* 네비게이션 링크 스타일 */
+.nav-links a {
+    margin-right: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    color: #1f77b4;
+}
+</style>
+
+<script>
+    function adjustMainContentPadding() {
+        const header = document.querySelector('.fixed-header');
+        const mainContent = document.querySelector('.main-content');
+        if (header && mainContent) {
+            const headerHeight = header.offsetHeight;
+            mainContent.style.paddingTop = headerHeight + 20 + 'px';
+        }
     }
-    .graph-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
-    .graph-box {
-        width: 90%;
-        height: 60vh;
-        margin-bottom: 20px;
-    }
-    .nav-links {
-        margin-bottom: 20px;
-    }
-    .nav-links a {
-        margin-right: 20px;
-        text-decoration: none;
-        font-weight: bold;
-        color: #1f77b4;
-    }
-    .complex-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 2px;  /* 버튼 간 간격 조정 */
-        margin-bottom: 20px;
-        padding: 2px;  /* 전체 패딩 추가 */
-    }
-    .sort-buttons {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-    .stButton > button {
-        width: auto;
-        max-width: 160px;
-        height: 35px;
-        text-align: left;
-        font-size: 10px;  /* 11px에서 10px로 줄임 */
-        padding: 4px 8px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin: 0;  /* margin 제거 */
-    }
-    .button-container {
-        position: fixed;
-        top: 60px;  /* selected-info 높이 + 여유공간 */
-        left: 0;
-        right: 0;
-        background-color: white;
-        z-index: 998;
-        padding: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-   .selected-info {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background-color: white;
-        z-index: 999;
-        padding: 10px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-        .stHorizontalBlock {
-        position: fixed !important;
-        top: 60px;
-        left: 0;
-        right: 0;
-        background: white;
-        z-index: 998;
-        padding: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    /* 스크롤 가능한 영역을 위한 여백 추가 */
-    .main-content {
-        padding-top: 250px !important;  /* 버튼 컨테이너 높이에 따라 조정 */
-    }
-    .selected-button {
-        background-color: #ff4b4b !important;
-        color: white !important;
-        border: 2px solid #ff4b4b !important;
-    }
-    </style>
+    const observer = new MutationObserver((mutations) => {
+        window.requestAnimationFrame(adjustMainContentPadding);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('load', adjustMainContentPadding);
+    window.addEventListener('resize', adjustMainContentPadding);
+</script>
 """, unsafe_allow_html=True)
 
-# 시트 ID 및 목록
+
+# --- 데이터 로딩 ---
 sheet_id = '1cUZ9-bMzeokaAGb84YAh--KngCM0U0-9pJgXHXrJ0U8'
 sheet_names = [
     '24.06.07', '24.06.26', '24.07.18', '24.07.31', '24.08.22',
@@ -117,233 +151,224 @@ sheet_names = [
     '25.01.13', '25.02.03', '25.04.19', '25.05.23', '25.06.09'
 ]
 
-# 날짜 변환 함수 추가
 def convert_date(date_str):
-    year = int('20' + date_str[:2])
-    month = int(date_str[3:5])
-    day = int(date_str[6:])
-    return pd.to_datetime(f'{year}-{month}-{day}')
+    return pd.to_datetime('20' + date_str, format='%Y.%m.%d')
 
-# 데이터 불러오기
-all_data = []
-for sheet in sheet_names:
-    try:
-        url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet}'
-        df = pd.read_csv(url)
-        df['날짜'] = convert_date(sheet)  # 날짜 변환
-        all_data.append(df)
-    except:
-        pass
+@st.cache_data
+def load_data():
+    all_data = []
+    for sheet in sheet_names:
+        try:
+            url = f'https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet}'
+            df = pd.read_csv(url)
+            df['날짜'] = convert_date(sheet)
+            all_data.append(df)
+        except Exception as e:
+            st.error(f"시트 '{sheet}' 로딩 중 오류 발생: {e}")
+    
+    if not all_data:
+        return pd.DataFrame(), pd.DataFrame()
+        
+    merged_df = pd.concat(all_data, ignore_index=True)
+    merged_df.sort_values('날짜', inplace=True)
+    merged_df['단지명_정제'] = merged_df['단지명'].str.replace(" ", "").str.strip()
 
-merged_df = pd.concat(all_data, ignore_index=True)
-merged_df = merged_df.sort_values('날짜')  # 날짜순 정렬
-merged_df['단지명_정제'] = merged_df['단지명'].str.replace(" ", "").str.strip()
+    # 숫자형으로 변환해야 할 모든 열을 처리
+    # '매매가', '전세가' 등은 '억' 단위의 실수(e.g., 15.2)로 가정
+    for col in ['매매가', '전고점', '전세가']:
+        if col in merged_df.columns:
+            merged_df[col] = pd.to_numeric(merged_df[col].astype(str).str.replace(',', ''), errors='coerce')
 
-# 가장 최신 데이터 기준
-latest_date = merged_df['날짜'].max()
-latest_df = merged_df[merged_df['날짜'] == latest_date]
+    # 그래프에 필요한 모든 데이터 컬럼 계산
+    # '매매가'가 '억' 단위이므로 '평단가'를 '만원' 단위로 계산
+    merged_df['평단가'] = (merged_df['매매가'] * 10000) / 24
+    # '갭가격'은 '억' 단위로 계산됨
+    merged_df['갭가격'] = merged_df['매매가'] - merged_df['전세가']
+    merged_df['하락/상승률'] = ((merged_df['매매가'] / merged_df['전고점'] * 100) - 100).round(1)
 
-# 평단가 계산 (매매가 / 24)
-if '매매가' in latest_df.columns:
-    latest_df = latest_df.copy()
-    # 매매가를 24로 나누어 평단가 계산
-    latest_df['계산된평단가'] = latest_df['매매가'] / 24
+    # 가장 최신 데이터 추출
+    latest_date = merged_df['날짜'].max()
+    latest_df = merged_df[merged_df['날짜'] == latest_date].copy()
+    
+    return merged_df, latest_df
 
+merged_df, latest_df = load_data()
 
-# 메인 컨텐츠 시작 전에 div 추가
-st.markdown("<div class='main-content'>", unsafe_allow_html=True)
+if latest_df.empty:
+    st.error("데이터를 불러오지 못했습니다. 구글 시트 ID나 네트워크 연결을 확인해주세요.")
+    st.stop()
 
-# 정렬 기준 선택
-st.markdown("#### 정렬 기준 선택")
-sort_option = st.radio("정렬 기준", options=["평단가", "이름순", "갭가격", "총세대수"], horizontal=True, label_visibility="collapsed")
-
-# 갭가격 계산
-if '매매가' in latest_df.columns and '전세가' in latest_df.columns:
-    latest_df = latest_df.copy()
-    latest_df['갭가격'] = latest_df['매매가'] - latest_df['전세가']
-
-# 단지 정보 정리
-def get_sort_value(row, key):
-    try:
-        return float(row[key])
-    except:
-        return -1
-
-sort_key = "단지명_정제"
-ascending = True
-if sort_option == "평단가":
-    sort_key = "계산된평단가"  # 계산된 평단가 사용
-    ascending = False
-elif sort_option == "이름순":
-    sort_key = "단지명_정제"
-elif sort_option == "갭가격":
-    sort_key = "갭가격"
-    ascending = False
-elif sort_option == "총세대수":
-    sort_key = "총세대수"
-    ascending = False
-
-latest_df = latest_df.copy()
-latest_df = latest_df[latest_df[sort_key].notnull()]
-latest_df = latest_df.sort_values(by=sort_key, ascending=ascending)
-
-# 단지 선택 상태
+# 세션 상태 초기화
 if 'selected' not in st.session_state:
     st.session_state.selected = set()
+if 'sort_option' not in st.session_state:
+    st.session_state.sort_option = "평단가"
 
-# 단지 버튼 UI
-st.markdown("#### 비교할 단지를 선택하세요")
+# --- 상단 고정 헤더 영역 ---
+st.markdown("<div class='fixed-header'>", unsafe_allow_html=True)
 
-# 선택된 단지 개수 표시 (실시간 업데이트) - Fixed 영역
-selected_display_names = []
-for name in st.session_state.selected:
-    row = latest_df[latest_df['단지명_정제'] == name]
-    if not row.empty:
-        selected_display_names.append(row.iloc[0]['단지명'])
+# 선택된 단지 정보 표시
+selected_display_names = [
+    latest_df[latest_df['단지명_정제'] == name_refined].iloc[0]['단지명']
+    for name_refined in st.session_state.selected
+    if not latest_df[latest_df['단지명_정제'] == name_refined].empty
+]
+selected_info_text = f"<strong>선택된 단지: {len(st.session_state.selected)}개</strong>"
+if selected_display_names:
+    selected_info_text += f" - {', '.join(selected_display_names)}"
+st.markdown(f"<div class='selected-info-bar'>{selected_info_text}</div>", unsafe_allow_html=True)
 
-st.markdown(f"""
-<div class='selected-info'>
-    <strong>선택된 단지: {len(st.session_state.selected)}개</strong> - {', '.join(selected_display_names) if selected_display_names else '없음'}
-</div>
-""", unsafe_allow_html=True)
 
-# 단지 목록을 반응형으로 나열 - Fixed 영역
+# 단지 선택 버튼 목록
 st.markdown("<div class='button-container'>", unsafe_allow_html=True)
 
-# 반응형 컬럼 계산 (화면 너비에 따라 자동 조정)
-import math
-total_complexes = len(latest_df)
-# 버튼 너비 180px + gap 2px = 약 182px per button
-# 기본적으로 많은 컬럼을 만들어서 flexbox가 자동으로 wrap하도록 함
-max_cols = min(20, total_complexes)  # 최대 20개 컬럼까지
-button_cols = st.columns(max_cols)
+# 정렬 기준에 따라 데이터프레임 정렬
+sort_map = {
+    "평단가": ("평단가", False),
+    "이름순": ("단지명_정제", True),
+    "갭가격": ("갭가격", False),
+    "총세대수": ("총세대수", False)
+}
+sort_key, ascending = sort_map.get(st.session_state.sort_option, ("평단가", False))
+if sort_key in latest_df.columns:
+    sortable_df = latest_df.dropna(subset=[sort_key]).copy()
+    sortable_df.sort_values(by=sort_key, ascending=ascending, inplace=True)
+else:
+    sortable_df = latest_df.copy()
 
-for i, row in enumerate(latest_df.itertuples()):
-    name = row.단지명_정제
-    display_name = row.단지명
-    
-    # 정렬 기준에 따른 값 표시
-    value = ""
-    if sort_key == "계산된평단가" and hasattr(row, '계산된평단가'):
-        try:
-            value = f"({float(row.계산된평단가):,.0f})"
-        except:
-            value = ""
-    elif sort_key == "갭가격" and hasattr(row, '갭가격'):
-        try:
-            value = f"({float(row.갭가격):,.0f})"
-        except:
-            value = ""
-    elif sort_key == "총세대수" and hasattr(row, '총세대수'):
-        try:
-            value = f"({float(row.총세대수):,.0f}세대)"
-        except:
-            value = ""
-    
-    # 기본값으로 계산된 평단가 항상 표시
-    if not value and hasattr(row, '계산된평단가'):
-        try:
-            value = f"({float(row.계산된평단가):,.0f})"
-        except:
-            value = ""
-    
-    label = f"{display_name} {value}"
-    is_selected = name in st.session_state.selected
-    
-    # 선택된 단지는 다른 스타일로 표시
-    button_type = "primary" if is_selected else "secondary"
-    
-    col_idx = i % max_cols
-    with button_cols[col_idx]:
-        if st.button(label, key=f"btn_{name}", type=button_type):
-            if is_selected:
-                st.session_state.selected.remove(name)
-            else:
-                st.session_state.selected.add(name)
+# 버튼들을 컬럼으로 감싸서 가로 배열 강제
+num_buttons = len(sortable_df)
+cols_per_row = 8  # 한 줄에 표시할 버튼 수
+num_rows = (num_buttons + cols_per_row - 1) // cols_per_row
 
-st.markdown("</div>", unsafe_allow_html=True)
+button_idx = 0
+for row in range(num_rows):
+    cols = st.columns(cols_per_row)
+    for col_idx in range(cols_per_row):
+        if button_idx < num_buttons:
+            row_data = sortable_df.iloc[button_idx]
+            name_refined = row_data.단지명_정제
+            display_name = row_data.단지명
+            value = ""
+            if st.session_state.sort_option == "평단가" and pd.notna(row_data.평단가):
+                value = f"({row_data.평단가:,.0f})"
+            elif st.session_state.sort_option == "갭가격" and pd.notna(row_data.갭가격):
+                value = f"({row_data.갭가격:,.1f})" # 갭가격은 소수점 표시
+            elif st.session_state.sort_option == "총세대수" and pd.notna(row_data.총세대수):
+                value = f"({int(row_data.총세대수):,}세대)"
+            
+            button_label = f"{display_name} {value}"
+            button_key = f"btn_{name_refined}"
+            is_selected = name_refined in st.session_state.selected
+            button_type = "primary" if is_selected else "secondary"
+            
+            with cols[col_idx]:
+                if st.button(button_label, key=button_key, type=button_type):
+                    if is_selected:
+                        st.session_state.selected.remove(name_refined)
+                    else:
+                        st.session_state.selected.add(name_refined)
+                    st.rerun()
+            button_idx += 1
 
-selected_complexes = list(st.session_state.selected)
+st.markdown("</div>", unsafe_allow_html=True) # button-container 닫기
+st.markdown("</div>", unsafe_allow_html=True) # fixed-header 닫기
 
-# 선택된 단지 표시
-if selected_complexes:
-    st.markdown("#### 선택된 단지 목록")
-    st.markdown(f"**{', '.join(selected_display_names)}**")
+# --- 메인 콘텐츠 영역 ---
+st.markdown("<div class='main-content'>", unsafe_allow_html=True)
+
+st.markdown("<h1 style='text-align: center; margin-bottom: 20px;'>🏠 네이버 부동산 매물(전용59㎡) 단지별 가격 비교</h1>", unsafe_allow_html=True)
+
+# 정렬 기준 선택 라디오 버튼
+st.markdown("#### 정렬 기준 선택")
+sort_options = ["평단가", "이름순", "갭가격", "총세대수"]
+new_sort_option = st.radio(
+    "정렬 기준", 
+    options=sort_options, 
+    horizontal=True, 
+    label_visibility="collapsed", 
+    key='sort_radio_button',
+    index=sort_options.index(st.session_state.sort_option)
+)
+
+if new_sort_option != st.session_state.sort_option:
+    st.session_state.sort_option = new_sort_option
+    st.rerun()
 
 # 네비게이션 링크
-st.markdown("### 단지별 가격 비교 그래프")
+st.markdown("### [그래프 바로가기]")
 st.markdown("""
 <div class="nav-links">
     <a href="#pyeongdan">📊 평단가</a>
     <a href="#maemega">📊 매매가</a>
     <a href="#jeonsega">📊 전세가</a>
     <a href="#gapga">📊 갭가격</a>
+    <a href="#rate">📊 하락/상승률</a>
 </div>
 """, unsafe_allow_html=True)
 
+# --- 그래프 그리는 함수 ---
 def draw_graph(df, subject, selected_list, anchor_id):
     plt.close('all')
-    st.markdown(f"<div id='{anchor_id}' class='graph-box'>", unsafe_allow_html=True)
+    st.markdown(f"<div id='{anchor_id}'></div>", unsafe_allow_html=True)
     st.subheader(f"📈 {subject} 변화 그래프")
     
     if not selected_list:
-        st.write("단지를 선택해주세요.")
+        st.info("비교할 단지를 선택해주세요.")
         return
-    
-    fig, ax = plt.subplots(figsize=(12, 4))
+        
+    fig, ax = plt.subplots(figsize=(12, 5))
     has_data = False
     
-    for name in selected_list:
-        data = df[df['단지명_정제'] == name]
+    # subject에 따른 단위 설정
+    unit_label = ""
+    if subject in ['매매가', '전세가', '갭가격']:
+        unit_label = "(억)"
+    elif subject == '평단가':
+        unit_label = "(만원)"
+    elif subject == '하락/상승률':
+        unit_label = "(%)"
+    
+    for name_refined in selected_list:
+        data = df[df['단지명_정제'] == name_refined].copy()
         if not data.empty and subject in data.columns:
-            # 데이터 타입 체크 및 변환
-            try:
-                if data[subject].dtype == 'object':
-                    # 문자열인 경우 콤마 제거 후 숫자로 변환
-                    values = pd.to_numeric(data[subject].astype(str).str.replace(',', ''), errors='coerce')
-                else:
-                    # 이미 숫자형인 경우 직접 사용
-                    values = data[subject]
-                
-                ax.plot(data['날짜'], values, marker='o', label=name)
+            data.dropna(subset=['날짜', subject], inplace=True)
+            if not data.empty:
+                display_name = data.iloc[0]['단지명']
+                ax.plot(data['날짜'], data[subject], marker='o', linestyle='-', label=display_name)
                 has_data = True
-            except Exception as e:
-                st.error(f"데이터 변환 중 오류 발생: {name} - {e}")
-                continue
     
     if has_data:
         ax.set_xlabel("날짜")
-        ax.set_ylabel(subject)
-        ax.set_title(f"{subject} 변화 추이")
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.grid(True, alpha=0.3)
-        ax.tick_params(axis='x', rotation=45)
+        ax.set_ylabel(f"{subject} {unit_label}")
+        ax.set_title(f"단지별 {subject} 변화 추이", pad=20)
+        ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+        ax.tick_params(axis='x', rotation=30)
         
-        # y축 포맷 설정
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: format(int(x), ',')))
+        # y축 포맷터 설정
+        if subject in ['매매가', '전세가', '갭가격']:
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:,.1f}'))
+        else: # 평단가, 하락/상승률
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
         
-        plt.tight_layout()
+        plt.tight_layout(rect=[0, 0, 0.85, 1]) # 범례 공간 확보
         st.pyplot(fig)
     else:
-        st.write(f"선택된 단지들의 {subject} 데이터가 없습니다.")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.warning(f"선택된 단지에 대한 '{subject}' 데이터가 없습니다.")
 
-# 그래프 출력
-if selected_complexes:
+# --- 그래프 출력 ---
+if st.session_state.selected:
     st.markdown("<div class='graph-container'>", unsafe_allow_html=True)
-    draw_graph(merged_df, "평단가", selected_complexes, "pyeongdan")
-    draw_graph(merged_df, "매매가", selected_complexes, "maemega")
-    draw_graph(merged_df, "전세가", selected_complexes, "jeonsega")
     
-    # 갭가격 계산 및 출력
-    gap_df = merged_df.copy()
-    if "매매가" in gap_df.columns and "전세가" in gap_df.columns:
-        gap_df["갭가격"] = gap_df["매매가"] - gap_df["전세가"]
-        draw_graph(gap_df, "갭가격", selected_complexes, "gapga")
-    else:
-        st.warning("갭가격 계산을 위한 매매가/전세가 데이터가 없습니다.")
-    
+    draw_graph(merged_df, "평단가", list(st.session_state.selected), "pyeongdan")
+    draw_graph(merged_df, "매매가", list(st.session_state.selected), "maemega")
+    draw_graph(merged_df, "전세가", list(st.session_state.selected), "jeonsega")
+    draw_graph(merged_df, "갭가격", list(st.session_state.selected), "gapga")
+    draw_graph(merged_df, "하락/상승률", list(st.session_state.selected), "rate")
+
     st.markdown("</div>", unsafe_allow_html=True)
 else:
-    st.info("비교할 단지를 선택해주세요.")
+    st.info("상단 목록에서 그래프에 표시할 단지를 1개 이상 선택해주세요.")
+
+st.markdown("</div>", unsafe_allow_html=True) # main-content 닫기
