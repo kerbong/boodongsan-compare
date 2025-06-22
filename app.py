@@ -33,25 +33,52 @@ def setup_korean_font():
             
             font_file = os.path.join(font_dir, 'NanumGothic.ttf')
             
-            # 폰트 파일이 없으면 다운로드
+            # 폰트 파일이 없으면 다운로드 시도 (여러 URL 시도)
             if not os.path.exists(font_file):
-                try:
-                    with st.spinner("한글 폰트를 다운로드하고 있습니다..."):
-                        font_url = 'https://github.com/naver/nanumfont/raw/master/fonts/NanumGothic.ttf'
-                        urllib.request.urlretrieve(font_url, font_file)
-                except Exception as e:
-                    st.warning(f"폰트 다운로드 실패: {e}. 기본 폰트를 사용합니다.")
-                    matplotlib.rc('font', family='DejaVu Sans')
-                    matplotlib.rcParams['axes.unicode_minus'] = False
-                    return "Default font applied"
+                font_urls = [
+                    # 방법 1: jsdelivr CDN 사용
+                    'https://cdn.jsdelivr.net/gh/naver/nanumfont@master/fonts/NanumGothic.ttf',
+                    # 방법 2: 다른 CDN 사용
+                    'https://raw.githubusercontent.com/naver/nanumfont/master/fonts/NanumGothic.ttf',
+                    # 방법 3: Google Fonts에서 제공하는 Noto Sans KR 사용
+                    'https://fonts.gstatic.com/s/notosanskr/v27/PbykFmXiEBPT4ITbgNA5Cgm20xz64px_1hVWr0wuPNGmlQNMEfD4.ttf'
+                ]
+                
+                font_downloaded = False
+                for i, font_url in enumerate(font_urls):
+                    try:
+                        with st.spinner(f"한글 폰트를 다운로드하고 있습니다... (시도 {i+1}/{len(font_urls)})"):
+                            urllib.request.urlretrieve(font_url, font_file)
+                            font_downloaded = True
+                            break
+                    except Exception as e:
+                        st.warning(f"폰트 다운로드 시도 {i+1} 실패: {e}")
+                        continue
+                
+                if not font_downloaded:
+                    st.warning("모든 폰트 다운로드 시도가 실패했습니다. 기본 폰트를 사용합니다.")
+                    # 시스템에 설치된 한글 폰트 찾기 시도
+                    available_fonts = [f.name for f in fm.fontManager.ttflist]
+                    korean_fonts = [font for font in available_fonts if any(korean in font.lower() for korean in ['nanum', 'malgun', 'gothic', 'dotum'])]
+                    
+                    if korean_fonts:
+                        matplotlib.rc('font', family=korean_fonts[0])
+                        matplotlib.rcParams['axes.unicode_minus'] = False
+                        return f"System Korean font applied: {korean_fonts[0]}"
+                    else:
+                        matplotlib.rc('font', family='DejaVu Sans')
+                        matplotlib.rcParams['axes.unicode_minus'] = False
+                        return "Default font applied - no Korean fonts found"
             
             # 폰트 등록 및 설정
             if os.path.exists(font_file):
                 try:
                     fm.fontManager.addfont(font_file)
+                    # 폰트 캐시 리빌드
+                    fm._rebuild()
                     plt.rcParams['font.family'] = 'NanumGothic'
                     plt.rcParams['axes.unicode_minus'] = False
-                    return "Korean font downloaded and applied"
+                    return "Korean font downloaded and applied successfully"
                 except Exception as e:
                     st.warning(f"폰트 설정 실패: {e}. 기본 폰트를 사용합니다.")
             
@@ -68,7 +95,7 @@ def setup_korean_font():
 
 # 폰트 설정 실행
 font_status = setup_korean_font()
-if "Korean font" not in font_status:
+if "Korean font" not in font_status and "System Korean font" not in font_status:
     st.info("💡 한글 폰트가 적용되지 않아 일부 텍스트가 □로 표시될 수 있습니다.")
 
 
