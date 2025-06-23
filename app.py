@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 import platform
+import plotly.graph_objects as go
+
 
 # 페이지를 넓게 사용하도록 설정
 st.set_page_config(layout="wide")
@@ -487,18 +489,13 @@ st.markdown("""
 
 # --- 그래프 그리는 함수 ---
 def draw_graph(df, subject, selected_list, anchor_id):
-    plt.close('all')
     st.markdown(f"<div id='{anchor_id}'></div>", unsafe_allow_html=True)
     st.subheader(f"📈 {subject} 변화 그래프")
-    
+
     if not selected_list:
         st.info("비교할 단지를 선택해주세요.")
         return
-        
-    fig, ax = plt.subplots(figsize=(12, 5))
-    has_data = False
-    
-    # subject에 따른 단위 설정
+
     unit_label = ""
     if subject in ['매매가', '전세가', '갭가격']:
         unit_label = "(억)"
@@ -506,35 +503,76 @@ def draw_graph(df, subject, selected_list, anchor_id):
         unit_label = "(만원)"
     elif subject == '하락/상승률':
         unit_label = "(%)"
-    
+
+    fig = go.Figure()
+    has_data = False
+
+    # 기준 날짜(마지막 날짜)에서의 y값이 큰 순서로 정렬
+    traces = []
     for name_refined in selected_list:
         data = df[df['단지명_정제'] == name_refined].copy()
         if not data.empty and subject in data.columns:
             data.dropna(subset=['날짜', subject], inplace=True)
             if not data.empty:
                 display_name = data.iloc[0]['단지명']
-                ax.plot(data['날짜'], data[subject], marker='o', linestyle='-', label=display_name)
+                # 기준 날짜: x축에서 가장 마지막 값
+                last_y = data[subject].iloc[-1]
+                traces.append((last_y, name_refined, data, display_name))
                 has_data = True
-    
+
+    # 기준 날짜의 y값이 큰 순서로 정렬
+    traces.sort(reverse=True, key=lambda x: x[0])
+
+    for _, name_refined, data, display_name in traces:
+        if subject == '평단가':
+            hovertemplate = (
+                f"단지명: {display_name}<br>날짜: %{{x}}<br>{subject}: %{{y:.1f}}{unit_label}<extra></extra>"
+            )
+        else:
+            hovertemplate = (
+                f"단지명: {display_name}<br>날짜: %{{x}}<br>{subject}: %{{y}}{unit_label}<extra></extra>"
+            )
+        fig.add_trace(
+            go.Scatter(
+                x=data['날짜'],
+                y=data[subject],
+                mode='lines+markers',
+                name=display_name,
+                marker=dict(size=8),
+                hovertemplate=hovertemplate
+            )
+        )
+
     if has_data:
-        ax.set_xlabel("날짜")
-        ax.set_ylabel(f"{subject} {unit_label}")
-        ax.set_title(f"단지별 {subject} 변화 추이", pad=20)
-        ax.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
-        ax.grid(True, which='both', linestyle='--', linewidth=0.5)
-        ax.tick_params(axis='x', rotation=30)
-        
-        # y축 포맷터 설정
-        if subject in ['매매가', '전세가', '갭가격']:
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:,.1f}'))
-        else: # 평단가, 하락/상승률
-            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{int(x):,}'))
-        
-        plt.tight_layout(rect=[0, 0, 0.85, 1]) # 범례 공간 확보
-        st.pyplot(fig)
+        # y축 눈금 2배로
+        y_values = []
+        for _, _, data, _ in traces:
+            y_values.extend(data[subject].tolist())
+        if y_values:
+            tick_count = 10
+            fig.update_yaxes(nticks=tick_count * 2)
+
+        # 평단가 y축 포맷
+        if subject == '평단가':
+            fig.update_yaxes(tickformat=",")
+        elif subject in ['매매가', '전세가', '갭가격']:
+            fig.update_yaxes(tickformat=".1f")
+        elif subject == '하락/상승률':
+            fig.update_yaxes(tickformat=".1f")
+
+        # 세로 길이 60vh (대략 600px)
+        fig.update_layout(
+            xaxis_title="날짜",
+            yaxis_title=f"{subject} {unit_label}",
+            title=f"단지별 {subject} 변화 추이",
+            legend=dict(x=1.02, y=1, bordercolor="Black", borderwidth=1),
+            margin=dict(r=150),
+            hovermode="x unified",
+            height=600  # 60vh 정도
+        )
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning(f"선택된 단지에 대한 '{subject}' 데이터가 없습니다.")
-
 # --- 그래프 출력 ---
 if st.session_state.selected:
     st.markdown("<div class='graph-container'>", unsafe_allow_html=True)
