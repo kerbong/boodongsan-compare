@@ -303,11 +303,12 @@ st.markdown("""
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    font-size: 14px;
 }
 </style>
 
 <div class="update-button-container">
-    <button class="update-button" onclick="window.location.search='?refresh=1'">
+    <button class="update-button" onclick="window.location.href=window.location.pathname + '?refresh=1'">
         🔄 데이터 업데이트
     </button>
 </div>
