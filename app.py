@@ -6,6 +6,16 @@ import platform
 import plotly.graph_objects as go
 
 
+# --- 데이터 로딩 ---
+sheet_id = '1cUZ9-bMzeokaAGb84YAh--KngCM0U0-9pJgXHXrJ0U8'
+sheet_names = [
+    '24.05.22', '24.06.07', '24.06.18', '24.06.26', '24.07.08', '24.07.18','24.07.31', '24.08.22',
+    '24.09.25', '24.10.22','24.11.02',  '24.11.14', '24.12.10',
+    '25.01.13', '25.02.03', '25.03.02','25.04.19', '25.05.23', '25.06.09', '25.07.12'
+]
+
+
+
 # 페이지를 넓게 사용하도록 설정
 st.set_page_config(layout="wide")
 
@@ -277,6 +287,26 @@ body {
 </style>
 """, unsafe_allow_html=True)
 
+# 버튼을 화면 우측 하단에 띄우기
+st.markdown("""
+    <style>
+    .update-button-container {
+        position: fixed;
+        bottom: 20px;
+        right: 120px;
+        z-index: 9999;
+    }
+    </style>
+    <div class="update-button-container">
+        <form action="?refresh=1" method="post">
+            <button style="background-color:#4CAF50;color:white;padding:10px 16px;border:none;border-radius:5px;cursor:pointer;">
+                🔄 데이터 업데이트
+            </button>
+        </form>
+    </div>
+""", unsafe_allow_html=True)
+
+
 # 맨 위로 버튼을 HTML로 직접 추가
 st.markdown("""
 <a href="#top" class="scroll-to-top" title="맨 위로">↑</a>
@@ -323,14 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
 """, unsafe_allow_html=True)
 
 
-# --- 데이터 로딩 ---
-sheet_id = '1cUZ9-bMzeokaAGb84YAh--KngCM0U0-9pJgXHXrJ0U8'
-sheet_names = [
-    '24.05.22', '24.06.07', '24.06.18', '24.06.26', '24.07.08', '24.07.18','24.07.31', '24.08.22',
-    '24.09.25', '24.10.22','24.11.02',  '24.11.14', '24.12.10',
-    '25.01.13', '25.02.03', '25.03.02','25.04.19', '25.05.23', '25.06.09', '25.07.12'
-]
-
 def convert_date(date_str):
     return pd.to_datetime('20' + date_str, format='%Y.%m.%d')
 
@@ -371,6 +393,11 @@ def load_data():
     latest_df = merged_df[merged_df['날짜'] == latest_date].copy()
     
     return merged_df, latest_df
+
+# 🔄 데이터 업데이트 버튼이 눌린 경우: 캐시 초기화 후 새로고침
+if st.query_params.get("refresh") == "1":
+    st.cache_data.clear()
+    st.experimental_rerun()
 
 merged_df, latest_df = load_data()
 
