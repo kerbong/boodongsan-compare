@@ -290,28 +290,28 @@ body {
 # 버튼을 화면 우측 하단에 띄우기
 st.markdown("""
 <style>
-.update-button-container {
+.update-span {
     position: fixed;
     bottom: 20px;
     right: 120px;
     z-index: 9999;
-}
-.update-button {
     background-color: #4CAF50;
     color: white;
     padding: 10px 16px;
-    border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+.update-span:hover {
+    background-color: #45a049;
 }
 </style>
 
-<div class="update-button-container">
-    <button class="update-button" onclick="window.location.href=window.location.pathname + '?refresh=1'">
-        🔄 데이터 업데이트
-    </button>
-</div>
+<span class="update-span" onclick="window.location.href=window.location.pathname + '?refresh=1'">
+    🔄 데이터 업데이트
+</span>
 """, unsafe_allow_html=True)
 
 
