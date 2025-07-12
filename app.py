@@ -289,21 +289,28 @@ body {
 
 # 버튼을 화면 우측 하단에 띄우기
 st.markdown("""
-    <style>
-    .update-button-container {
-        position: fixed;
-        bottom: 20px;
-        right: 120px;
-        z-index: 9999;
-    }
-    </style>
-    <div class="update-button-container">
-        <form action="?refresh=1" method="post">
-            <button style="background-color:#4CAF50;color:white;padding:10px 16px;border:none;border-radius:5px;cursor:pointer;">
-                🔄 데이터 업데이트
-            </button>
-        </form>
-    </div>
+<style>
+.update-button-container {
+    position: fixed;
+    bottom: 20px;
+    right: 120px;
+    z-index: 9999;
+}
+.update-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+</style>
+
+<div class="update-button-container">
+    <button class="update-button" onclick="window.location.search='?refresh=1'">
+        🔄 데이터 업데이트
+    </button>
+</div>
 """, unsafe_allow_html=True)
 
 
